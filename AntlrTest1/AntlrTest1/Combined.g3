@@ -1,0 +1,93 @@
+﻿grammar Combined;
+
+options {
+    language=CSharp3;
+    //TokenLabelType=CommonToken;
+    output=AST;
+    ASTLabelType=CommonTree;
+}
+
+tokens {
+}
+
+@lexer::namespace{AntlrTest1}
+@parser::namespace{AntlrTest1}
+
+/*
+ * Parser Rules
+ */
+
+public searchString
+	: expression
+	;
+
+public value
+	:	VALUE
+	|	QUOTEDVALUE
+	;
+
+public searchValue
+	: 	operator? value
+	;
+
+public operator
+	:	OPERATOR
+	;
+
+public searchTerm
+	: 	'('! expression ')'!
+	| 	FIELDNAME^ searchValue
+	|	freeText
+	;
+
+public freeText
+	:	value+
+	;
+
+public andrule
+	:	AND
+	;
+
+public orrule
+	:	OR
+	;
+
+public and
+	:	searchTerm (andrule^ searchTerm)*
+	;
+
+public expression
+	: and (orrule^ and) *
+	;
+
+/* Lexer */
+/* Fieldname: Eg. Name: or StartDate: */
+public FIELDNAME
+	: 	( 'a' .. 'z' | 'A' .. 'Z' | '_' ) ('a' .. 'z' | 'A' .. 'Z' | '0' .. '9' | '_' ) * ':' 
+	;
+
+public AND
+	: 'AND'
+	;
+
+public OR
+	: 'OR'
+	;
+
+/* A Word: Eg. Cat or 9.53cm */
+public VALUE
+	: 	( 'a' .. 'z' | 'A' .. 'Z' | '0' .. '9' | '.' | '/' | '-' ) + 
+	;
+
+public OPERATOR
+	:	('=' | '<' | '>' | '<=' | '>=' | '!=')
+	;
+
+/* A Quoted String: Eg. "The dog ate the cat.", "Boom, Headshot" */
+public QUOTEDVALUE
+	: 	'"' VALUE (WS VALUE)* '"'
+	;
+
+WS	:  	( ' ' | '\t' | '\r' | '\n' | '\f' ) {$channel=Hidden;}
+	;
+
